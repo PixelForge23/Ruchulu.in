@@ -1177,4 +1177,395 @@ function AdminBlogFormPage({ editingId, blogs, categories, onSave, onCancel, sho
         </button>
         <button type="button" disabled=${saving} onClick=${() => submit('published')}
           class="bg-[#FF6B35] text-white px-8 py-3 rounded-full text-[13px] font-bold shadow disabled:opacity-60">
-          ${saving ? 'సేవ్ అవుతోంది…' : 'Publish
+          ${saving ? 'సేవ్ అవుతోంది…' : 'Publish Blog'}
+        </button>
+        <button type="button" onClick=${onCancel} class="ml-auto text-[12px] text-stone-500">రద్దు చేయి</button>
+      </div>
+    </div>
+  `;
+}
+
+function AdminBlogsPage({ blogs, onNavigate, onDelete, showToast }) {
+  const [confirmId, setConfirmId] = useState(null);
+
+  useEffect(() => {
+    if (!confirmId) return;
+    const onKey = (e) => { if (e.key === 'Escape') setConfirmId(null); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [confirmId]);
+
+  const doDelete = async () => {
+    await onDelete(confirmId);
+    setConfirmId(null);
+    showToast('బ్లాగ్ తొలగించబడింది', 'success');
+  };
+
+  return html`
+    <div class="bg-white rounded-2xl border overflow-hidden animate-fade-in">
+      <div class="p-5 flex flex-wrap justify-between items-center gap-3 border-b">
+        <h2 class="font-black">బ్లాగ్స్ నిర్వహణ – ${blogs.length}</h2>
+        <button onClick=${() => onNavigate('admin-dashboard')}
+          class="text-[11px] bg-stone-100 px-3 py-1.5 rounded-full font-bold">డాష్‌బోర్డ్</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-[12px] min-w-[560px]">
+          <thead class="bg-stone-50 text-stone-500">
+            <tr>
+              <th class="p-3">Title</th>
+              <th class="p-3">Category</th>
+              <th class="p-3">Date</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${blogs.map(b => html`
+              <tr key=${b.id} class="border-t hover:bg-stone-50">
+                <td class="p-3 font-bold max-w-[220px] truncate">${b.title}</td>
+                <td class="p-3">${b.categoryName}</td>
+                <td class="p-3">${b.publishDate}</td>
+                <td class="p-3">
+                  <span class=${`px-2 py-1 rounded-full text-[10px] font-bold ${
+                    b.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  }`}>${b.status}</span>
+                </td>
+                <td class="p-3 flex gap-1">
+                  <button onClick=${() => onNavigate('admin-edit', { blogId: b.id })}
+                    class="bg-stone-900 text-white px-3 py-1 rounded-full text-[11px]">Edit</button>
+                  <button onClick=${() => setConfirmId(b.id)}
+                    class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[11px] font-bold">Delete</button>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      </div>
+
+      ${confirmId && html`
+        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm grid place-items-center z-50 p-4"
+          role="dialog" aria-modal="true" aria-labelledby="del-title"
+          onClick=${(e) => { if (e.target === e.currentTarget) setConfirmId(null); }}>
+          <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 id="del-title" class="font-black text-[15px] mb-2">ఈ బ్లాగ్‌ను నిజంగా తొలగించాలా?</h3>
+            <p class="text-[12px] text-stone-500 mb-6">
+              తొలగించిన తర్వాత Home, Search, Category, Archive నుండి కూడా తొలగిపోతుంది.
+            </p>
+            <div class="flex gap-2 justify-end">
+              <button onClick=${() => setConfirmId(null)}
+                class="bg-stone-100 px-5 py-2 rounded-full text-[12px] font-bold">Cancel</button>
+              <button onClick=${doDelete}
+                class="bg-red-600 text-white px-5 py-2 rounded-full text-[12px] font-bold">Delete</button>
+            </div>
+          </div>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function AdminCategoriesPage({ categories, blogs, onCreate, onDelete, showToast }) {
+  const [name, setName] = useState('');
+  const add = async () => {
+    const v = name.trim();
+    if (!v) return;
+    const dup = categories.some(c => c.name.toLowerCase() === v.toLowerCase());
+    if (dup) { showToast('ఈ వర్గం ఇప్పటికే ఉంది', 'error'); return; }
+    await onCreate({
+      id: 'c' + Date.now(),
+      name: v,
+      slug: v.toLowerCase().replace(/\s+/g, '-'),
+      icon: '🍽',
+    });
+    setName('');
+    showToast('వర్గం జోడించబడింది', 'success');
+  };
+  return html`
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl border p-6 animate-fade-in">
+      <h2 class="font-black text-[16px] mb-4">కేటగిరీలు – ${categories.length}</h2>
+      <div class="flex gap-2 mb-6">
+        <input value=${name} onChange=${(e) => setName(e.target.value)}
+          placeholder="కొత్త కేటగిరీ పేరు"
+          class="flex-1 border rounded-full px-4 py-2.5 text-[13px]" />
+        <button onClick=${add}
+          class="bg-[#FF6B35] text-white px-5 rounded-full text-[12px] font-bold">Add</button>
+      </div>
+      <div class="space-y-2">
+        ${categories.map(c => {
+          const count = blogs.filter(b => b.categoryId === c.id).length;
+          return html`
+            <div key=${c.id} class="flex justify-between items-center border rounded-xl px-4 py-3">
+              <span class="text-[13px] font-bold">
+                ${c.icon} ${c.name}
+                <span class="text-[11px] text-stone-400 ml-2">${count} blogs</span>
+              </span>
+              <button onClick=${async () => {
+                  if (count > 0) { showToast('బ్లాగ్స్ ఉన్న వర్గాన్ని తొలగించలేరు', 'error'); return; }
+                  if (confirm(`'${c.name}' తొలగించాలా?`)) {
+                    await onDelete(c.id);
+                    showToast('వర్గం తొలగించబడింది', 'success');
+                  }
+                }}
+                class="text-[11px] text-red-600 font-bold">Delete</button>
+            </div>
+          `;
+        })}
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+function App() {
+  const [page, setPage] = useState('home');
+  const [pageParams, setPageParams] = useState({});
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [blogs, setBlogs] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [visitors, setVisitors] = useState({ today: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [dataMode, setDataMode] = useState('local');
+
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedDate, setSelectedDate] = useState(todayISO());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminError, setAdminError] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'info') => {
+    setToast({ message, type, id: Date.now() });
+  }, []);
+
+  /* ---------- Bootstrap: init → subscribe ---------- */
+  useEffect(() => {
+    let unsubBlogs, unsubCats, unsubVisitors, unsubAuth;
+    let cancelled = false;
+
+    (async () => {
+      const mode = await DataService.init();
+      if (cancelled) return;
+      setDataMode(mode);
+      await DataService.seedIfEmpty();
+      if (cancelled) return;
+
+      // Bump visitor once per day
+      DataService.bumpVisitorCount().catch(() => {});
+
+      unsubBlogs    = DataService.subscribeBlogs(setBlogs);
+      unsubCats     = DataService.subscribeCategories(setCategories);
+      unsubVisitors = DataService.subscribeVisitors(setVisitors);
+      unsubAuth     = DataService.onAuthChange((signedIn) => setIsAdmin(signedIn));
+
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubBlogs?.();
+      unsubCats?.();
+      unsubVisitors?.();
+      unsubAuth?.();
+    };
+  }, []);
+
+  /* ---------- Derived published blogs ---------- */
+  const publishedBlogs = useMemo(
+    () => blogs
+      .filter(b => b.status === 'published')
+      .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()),
+    [blogs]
+  );
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return publishedBlogs.filter(b =>
+      b.title?.toLowerCase().includes(q) ||
+      b.shortDescription?.toLowerCase().includes(q) ||
+      b.content?.toLowerCase().includes(q) ||
+      b.categoryName?.toLowerCase().includes(q) ||
+      (b.ingredients || []).join(' ').toLowerCase().includes(q)
+    );
+  }, [publishedBlogs, searchQuery]);
+
+  /* ---------- Navigation ---------- */
+  const navigate = useCallback((nextPage, params = {}) => {
+    setPage(nextPage);
+    setPageParams(params);
+    setMenuOpen(false);
+    if (params.categoryId !== undefined) setSelectedCategory(params.categoryId);
+    if (params.date !== undefined) setSelectedDate(params.date);
+    if (params.search !== undefined) setSearchQuery(params.search);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  /* ---------- SEO titles ---------- */
+  useEffect(() => {
+    const titles = {
+      home: 'రుచులు – తెలుగు వంటకాలు | Telugu Food Daily',
+      all: 'అన్ని వంటకాలు | రుచులు',
+      daily: 'రోజువారీ బ్లాగ్స్ | రుచులు',
+      search: 'వెతకండి | రుచులు',
+      archive: 'ఆర్కైవ్ | రుచులు',
+      about: 'మా గురించి | రుచులు',
+      contact: 'సంప్రదించండి | రుచులు',
+      'admin-login': 'అడ్మిన్ లాగిన్ | రుచులు',
+      'admin-dashboard': 'డాష్‌బోర్డ్ | రుచులు',
+      'admin-create': 'కొత్త బ్లాగ్ | రుచులు',
+      'admin-blogs': 'బ్లాగ్స్ నిర్వహణ | రుచులు',
+      'admin-categories': 'కేటగిరీలు | రుచులు',
+    };
+    document.title = titles[page] || 'రుచులు – తెలుగు వంటకాలు';
+  }, [page]);
+
+  /* ---------- Admin actions ---------- */
+  const handleLogin = async ({ email, password }) => {
+    setAdminError('');
+    const res = await DataService.login(email, password);
+    if (res.ok) {
+      setIsAdmin(true);
+      navigate('admin-dashboard');
+      showToast('లాగిన్ విజయవంతం', 'success');
+    } else {
+      setAdminError(
+        res.error === 'invalid-credentials'
+          ? 'ఇమెయిల్ లేదా పాస్‌వర్డ్ తప్పు'
+          : 'లాగిన్ విఫలమైంది: ' + (res.error || 'తెలియని లోపం')
+      );
+    }
+  };
+
+  const handleLogout = async () => {
+    await DataService.logout();
+    setIsAdmin(false);
+    navigate('home');
+    showToast('లాగ్ అవుట్ అయ్యారు', 'info');
+  };
+
+  const saveBlog = async (payload) => {
+    await DataService.saveBlog(payload);
+    navigate('admin-dashboard');
+  };
+
+  const deleteBlog = async (id) => {
+    await DataService.deleteBlog(id);
+  };
+
+  const createCategory = async (cat) => { await DataService.saveCategory(cat); };
+  const deleteCategory = async (id) => { await DataService.deleteCategory(id); };
+
+  /* ---------- Blog open + view bump ---------- */
+  const openBlog = useCallback(async (blog) => {
+    navigate('blog', { slug: blog.slug });
+    // Optimistic view bump — real view count handled by backend
+    try { await DataService.saveBlog({ ...blog, views: (blog.views || 0) + 1 }); } catch {}
+  }, [navigate]);
+
+  /* ---------- Admin guard ---------- */
+  useEffect(() => {
+    if (page.startsWith('admin-') && page !== 'admin-login' && !isAdmin) {
+      navigate('admin-login');
+    }
+  }, [page, isAdmin, navigate]);
+
+  /* ---------- Render page ---------- */
+  const renderPage = () => {
+    if (loading) return html`<${LoadingState} message=${`డేటా లోడ్ అవుతోంది (${dataMode} mode)…`} />`;
+    switch (page) {
+      case 'home':
+        return html`<${HomePage}
+          blogs=${publishedBlogs} categories=${categories} visitors=${visitors}
+          onOpenBlog=${openBlog} onNavigate=${navigate}
+          selectedDate=${selectedDate} setSelectedDate=${setSelectedDate} />`;
+      case 'all':
+        return html`<${AllBlogsPage}
+          blogs=${publishedBlogs} categories=${categories}
+          selectedCategory=${selectedCategory} setSelectedCategory=${setSelectedCategory}
+          onOpenBlog=${openBlog} />`;
+      case 'daily':
+        return html`<${DailyPage}
+          blogs=${publishedBlogs} selectedDate=${selectedDate}
+          setSelectedDate=${setSelectedDate} onOpenBlog=${openBlog} />`;
+      case 'search':
+        return html`<${SearchPage}
+          query=${searchQuery} setQuery=${setSearchQuery}
+          results=${searchResults} onOpenBlog=${openBlog} />`;
+      case 'category':
+        return html`<${CategoryPage}
+          blogs=${publishedBlogs} categories=${categories}
+          categoryId=${selectedCategory} onOpenBlog=${openBlog} />`;
+      case 'blog':
+        return html`<${BlogDetailPage}
+          slug=${pageParams.slug} blogs=${publishedBlogs}
+          onOpenBlog=${openBlog} onNavigate=${navigate} />`;
+      case 'archive':
+        return html`<${ArchivePage} blogs=${publishedBlogs} onOpenBlog=${openBlog} />`;
+      case 'about':
+        return html`<${AboutPage} />`;
+      case 'contact':
+        return html`<${ContactPage} showToast=${showToast} />`;
+      case 'admin-login':
+        return html`<${AdminLoginPage} onLogin=${handleLogin} errorMsg=${adminError} />`;
+      case 'admin-dashboard':
+        return html`<${AdminDashboardPage}
+          blogs=${blogs} categories=${categories}
+          onNavigate=${navigate} onLogout=${handleLogout} />`;
+      case 'admin-create':
+        return html`<${AdminBlogFormPage}
+          editingId=${null} blogs=${blogs} categories=${categories}
+          onSave=${saveBlog} onCancel=${() => navigate('admin-dashboard')}
+          showToast=${showToast} />`;
+      case 'admin-edit':
+        return html`<${AdminBlogFormPage}
+          key=${pageParams.blogId}
+          editingId=${pageParams.blogId} blogs=${blogs} categories=${categories}
+          onSave=${saveBlog} onCancel=${() => navigate('admin-dashboard')}
+          showToast=${showToast} />`;
+      case 'admin-blogs':
+        return html`<${AdminBlogsPage}
+          blogs=${blogs} onNavigate=${navigate}
+          onDelete=${deleteBlog} showToast=${showToast} />`;
+      case 'admin-categories':
+        return html`<${AdminCategoriesPage}
+          categories=${categories} blogs=${blogs}
+          onCreate=${createCategory} onDelete=${deleteCategory}
+          showToast=${showToast} />`;
+      default:
+        return html`<${NotFoundPage} onNavigate=${navigate} />`;
+    }
+  };
+
+  const handleSubmitSearch = (q) => {
+    setSearchQuery(q);
+    navigate('search');
+  };
+
+  return html`
+    <div class="min-h-screen bg-[#FFF8F0] text-[#1A1A1A]">
+      <${Header}
+        page=${page} onNavigate=${navigate}
+        searchQuery=${searchQuery} setSearchQuery=${setSearchQuery}
+        onSubmitSearch=${handleSubmitSearch}
+        menuOpen=${menuOpen} setMenuOpen=${setMenuOpen}
+        isAdmin=${isAdmin} />
+      <main id="main" class="max-w-[1160px] mx-auto px-4 md:px-6 py-6 md:py-10">
+        ${renderPage()}
+      </main>
+      <${Footer} onNavigate=${navigate} categories=${categories} />
+      <${BackToTop} />
+      <${Toast} toast=${toast} onDismiss=${() => setToast(null)} />
+    </div>
+  `;
+}
+
+/* ---------- Mount ---------- */
+const root = createRoot(document.getElementById('root'));
+root.render(html`<${App} />`);
