@@ -1,14 +1,8 @@
 /* =============================================================
-   data.js — Data layer with 3 sync modes
-   -------------------------------------------------------------
-   Mode priority (auto-detected at startup):
-
-   1. FIREBASE   → if firebaseConfig is filled in
-   2. CLOUD      → if CLOUD_SYNC_ID is filled in (jsonblob.com)
-   3. LOCAL      → fallback: localStorage (same device only)
+   data.js — Data layer with 3 modes: firebase / cloud / local
    ============================================================= */
 
-/* ---------- 1. FIREBASE CONFIG (optional) ------------------- */
+/* ---- 1. FIREBASE CONFIG (optional — leave placeholders if not using) ---- */
 export const firebaseConfig = {
   apiKey:            "YOUR_API_KEY",
   authDomain:        "YOUR_PROJECT.firebaseapp.com",
@@ -20,22 +14,15 @@ export const firebaseConfig = {
 export const isFirebaseConfigured = () =>
   !String(firebaseConfig.apiKey).startsWith('YOUR_');
 
-/* ---------- 2. CLOUD SYNC (jsonblob — zero setup) -----------
-   How to get an ID:
-     a) Open the site as admin → Admin Dashboard → "Cloud Sync" panel
-     b) Click "Create New Sync Blob"
-     c) Copy the returned ID (e.g. "1234567890123456789")
-     d) Paste it below, redeploy.
-   All users on any device will now read/write the same data.
-   ------------------------------------------------------------ */
-export const CLOUD_SYNC_ID = '';   // e.g. "1234567890123456789"
+/* ---- 2. CLOUD SYNC (zero setup) ----------------------------------------
+   Paste your Sync ID here after clicking "Create New Sync Blob"
+   in Admin → Dashboard → Cloud Sync.
+   -------------------------------------------------------------------- */
+export const CLOUD_SYNC_ID = '';
 const CLOUD_BASE = 'https://jsonblob.com/api/jsonBlob';
 
-/* ---------- 3. CONSTANTS & HELPERS -------------------------- */
-export const TELUGU_MONTHS = [
-  "జనవరి","ఫిబ్రవరి","మార్చి","ఏప్రిల్","మే","జూన్",
-  "జూలై","ఆగస్టు","సెప్టెంబర్","అక్టోబర్","నవంబర్","డిసెంబర్"
-];
+/* ---- 3. Constants & helpers ---- */
+export const TELUGU_MONTHS = ["జనవరి","ఫిబ్రవరి","మార్చి","ఏప్రిల్","మే","జూన్","జూలై","ఆగస్టు","సెప్టెంబర్","అక్టోబర్","నవంబర్","డిసెంబర్"];
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 export const formatTeluguDate = (input) => {
   try {
@@ -44,7 +31,6 @@ export const formatTeluguDate = (input) => {
     return `${d.getDate()} ${TELUGU_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
   } catch { return String(input ?? ''); }
 };
-
 export const KNOWN_SLUGS = {
   "ఆంధ్ర స్టైల్ గుత్తి వంకాయ కూర": "andhra-gutti-vankaya",
   "హైదరాబాదీ చికెన్ బిర్యానీ": "hyderabadi-chicken-biryani",
@@ -58,10 +44,8 @@ export const KNOWN_SLUGS = {
 export const makeSlug = (title) => {
   if (!title) return 'recipe-' + Date.now();
   if (KNOWN_SLUGS[title]) return KNOWN_SLUGS[title];
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '').slice(0, 60) || 'recipe-' + Date.now();
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'recipe-' + Date.now();
 };
-
 export const makeImage = (bg, emoji, label) => {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'>
     <rect width='800' height='600' fill='${bg}'/>
@@ -73,7 +57,7 @@ export const makeImage = (bg, emoji, label) => {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 };
 
-/* ---------- 4. SEED CONTENT (unchanged from before) --------- */
+/* ---- 4. Seed content ---- */
 export const DEFAULT_CATEGORIES = [
   { id:"c1",  name:"అన్నం వంటకాలు",       slug:"annam-vantakalu",         icon:"🍚" },
   { id:"c2",  name:"కూరలు",               slug:"kooralu",                 icon:"🍛" },
@@ -86,7 +70,6 @@ export const DEFAULT_CATEGORIES = [
   { id:"c9",  name:"Traditional Recipes", slug:"traditional",             icon:"👩‍🍳" },
   { id:"c10", name:"ఇతర వంటకాలు",         slug:"ithara",                  icon:"🍽" },
 ];
-
 export const IMG = {
   gutti:      makeImage("#FFF0E6","🍆","Gutti Vankaya"),
   biryani:    makeImage("#FFF3CD","🍛","Chicken Biryani"),
@@ -97,8 +80,6 @@ export const IMG = {
   mamidikaya: makeImage("#FFFDE7","🥭","Mamidikaya Pappu"),
   ariselu:    makeImage("#FCE4EC","🍪","Ariselu"),
 };
-
-/* Minimal seed (only used on very first ever run) */
 export const DEFAULT_BLOGS = () => ([
   {
     id:"b1", title:"ఆంధ్ర స్టైల్ గుత్తి వంకాయ కూర", slug:"andhra-gutti-vankaya",
@@ -190,18 +171,13 @@ export const DEFAULT_BLOGS = () => ([
   },
 ]);
 
-/* ---------- 5. LOCAL KEYS & HELPERS ------------------------- */
+/* ---- 5. Local keys ---- */
 export const KEYS = {
-  blogs:      'telugu_food_blogs',
-  categories: 'telugu_food_categories',
-  visitors:   'telugu_food_visitors',
-  admin:      'telugu_admin_session',
-  lastVisit:  'telugu_last_visit',
-  syncId:     'telugu_food_sync_id',
+  blogs:'telugu_food_blogs', categories:'telugu_food_categories',
+  visitors:'telugu_food_visitors', admin:'telugu_admin_session',
+  lastVisit:'telugu_last_visit', syncId:'telugu_food_sync_id',
 };
-export const safeParse = (raw, fb) => {
-  try { return raw ? JSON.parse(raw) : fb; } catch { return fb; }
-};
+export const safeParse = (raw, fb) => { try { return raw ? JSON.parse(raw) : fb; } catch { return fb; } };
 
 let _syncChannel = null;
 try { _syncChannel = new BroadcastChannel('telugu-food-sync'); } catch {}
@@ -211,18 +187,15 @@ function _emitSync(kind) {
   window.dispatchEvent(new CustomEvent('food-sync', { detail: payload }));
 }
 
-/* =============================================================
-   6. DataService — 3-mode data layer
-   ============================================================= */
+/* ---- 6. DataService ---- */
 export const DataService = {
   mode: 'local',
-  app: null, db: null, auth: null, _firebase: null,
-  _listeners: { blogs: new Set(), categories: new Set(), visitors: new Set() },
-  _cloudState: { blogs: [], categories: [], visitors: { today: 0, total: 0 } },
+  app:null, db:null, auth:null, _firebase:null,
+  _listeners: { blogs:new Set(), categories:new Set(), visitors:new Set() },
+  _cloudState: { blogs:[], categories:[], visitors:{today:0,total:0} },
   _cloudPollTimer: null,
   _cloudWriteQueue: Promise.resolve(),
 
-  /* ---------- INIT ---------- */
   async init() {
     if (isFirebaseConfigured()) {
       try {
@@ -236,95 +209,78 @@ export const DataService = {
         this.db   = fbFs.getFirestore(this.app);
         this.auth = fbAuth.getAuth(this.app);
         this.mode = 'firebase';
-        console.info('%c[DataService] FIREBASE mode active', 'color:#2D5016;font-weight:bold');
+        console.info('%c[DataService] FIREBASE mode active','color:#2D5016;font-weight:bold');
         return 'firebase';
-      } catch (err) {
-        console.error('[DataService] Firebase init failed → falling back', err);
-      }
+      } catch (err) { console.error('[DataService] Firebase init failed', err); }
     }
-
     if (CLOUD_SYNC_ID) {
       this.mode = 'cloud';
-      console.info('%c[DataService] CLOUD mode active (jsonblob)', 'color:#FF6B35;font-weight:bold');
+      console.info('%c[DataService] CLOUD mode active','color:#FF6B35;font-weight:bold');
       await this._cloudPull();
       this._startCloudPolling();
       return 'cloud';
     }
-
     this.mode = 'local';
-    console.info('%c[DataService] LOCAL mode (same-device only)', 'color:#888;font-weight:bold');
+    console.info('%c[DataService] LOCAL mode (same-device only)','color:#888;font-weight:bold');
     return 'local';
   },
 
-  /* ---------- SEED (first run only) ---------- */
   async seedIfEmpty() {
     if (this.mode === 'firebase') {
       const { collection, getDocs, writeBatch, doc, getDoc, setDoc } = this._firebase;
-      const blogsSnap = await getDocs(collection(this.db, 'blogs'));
-      if (blogsSnap.empty) {
+      const bSnap = await getDocs(collection(this.db, 'blogs'));
+      if (bSnap.empty) {
         const b = writeBatch(this.db);
         DEFAULT_BLOGS().forEach(x => b.set(doc(this.db, 'blogs', x.id), x));
         await b.commit();
       }
-      const catSnap = await getDocs(collection(this.db, 'categories'));
-      if (catSnap.empty) {
+      const cSnap = await getDocs(collection(this.db, 'categories'));
+      if (cSnap.empty) {
         const b = writeBatch(this.db);
         DEFAULT_CATEGORIES.forEach(x => b.set(doc(this.db, 'categories', x.id), x));
         await b.commit();
       }
       const vRef = doc(this.db, 'settings', 'visitors');
       const vSnap = await getDoc(vRef);
-      if (!vSnap.exists()) {
-        await setDoc(vRef, { today: 0, total: 0, lastVisitDate: null });
-      }
+      if (!vSnap.exists()) await setDoc(vRef, { today:0, total:0, lastVisitDate:null });
       return;
     }
-
     if (this.mode === 'cloud') {
-      // server already has data? if empty, seed it
       const cur = await this._cloudPull();
       if (!cur || (!cur.blogs?.length && !cur.categories?.length)) {
         const seed = {
           blogs: DEFAULT_BLOGS(),
           categories: DEFAULT_CATEGORIES,
-          visitors: { today: 0, total: 0, lastVisitDate: null },
+          visitors: { today:0, total:0, lastVisitDate:null },
         };
         await this._cloudPush(seed);
         this._cloudState = seed;
       }
       return;
     }
-
-    // local
-    if (!localStorage.getItem(KEYS.blogs))
-      localStorage.setItem(KEYS.blogs, JSON.stringify(DEFAULT_BLOGS()));
-    if (!localStorage.getItem(KEYS.categories))
-      localStorage.setItem(KEYS.categories, JSON.stringify(DEFAULT_CATEGORIES));
-    if (!localStorage.getItem(KEYS.visitors))
-      localStorage.setItem(KEYS.visitors, JSON.stringify({ today: 0, total: 0 }));
+    if (!localStorage.getItem(KEYS.blogs)) localStorage.setItem(KEYS.blogs, JSON.stringify(DEFAULT_BLOGS()));
+    if (!localStorage.getItem(KEYS.categories)) localStorage.setItem(KEYS.categories, JSON.stringify(DEFAULT_CATEGORIES));
+    if (!localStorage.getItem(KEYS.visitors)) localStorage.setItem(KEYS.visitors, JSON.stringify({ today:0, total:0 }));
   },
 
-  /* ============================================================
-     BLOGS
-     ============================================================ */
+  /* BLOGS */
   subscribeBlogs(cb) {
     if (this.mode === 'firebase') {
       const { collection, onSnapshot } = this._firebase;
       return onSnapshot(collection(this.db, 'blogs'),
-        snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-        err => console.error('[blogs] snapshot error', err));
+        s => cb(s.docs.map(d => ({ id:d.id, ...d.data() }))),
+        e => console.error('[blogs]', e));
     }
     if (this.mode === 'cloud') {
       this._listeners.blogs.add(cb);
       cb(this._cloudState.blogs || []);
       return () => this._listeners.blogs.delete(cb);
     }
-    // local
     const handler = () => cb(this._readLocalBlogs());
     window.addEventListener('storage', handler);
     window.addEventListener('food-sync', handler);
     _syncChannel?.addEventListener('message', handler);
-    const iv = setInterval(handler, 2000);       // aggressive fallback
+    const iv = setInterval(handler, 2000);
     handler();
     return () => {
       window.removeEventListener('storage', handler);
@@ -333,18 +289,13 @@ export const DataService = {
       clearInterval(iv);
     };
   },
-
   _readLocalBlogs() {
     const raw = localStorage.getItem(KEYS.blogs);
-    if (raw) {
-      const p = safeParse(raw, null);
-      if (Array.isArray(p) && p.length) return p;
-    }
+    if (raw) { const p = safeParse(raw, null); if (Array.isArray(p) && p.length) return p; }
     const seed = DEFAULT_BLOGS();
     localStorage.setItem(KEYS.blogs, JSON.stringify(seed));
     return seed;
   },
-
   async saveBlog(blog) {
     if (this.mode === 'firebase') {
       const { doc, setDoc } = this._firebase;
@@ -353,23 +304,19 @@ export const DataService = {
     }
     if (this.mode === 'cloud') {
       const list = [...(this._cloudState.blogs || [])];
-      const idx = list.findIndex(b => b.id === blog.id);
-      if (idx >= 0) list[idx] = { ...list[idx], ...blog };
-      else list.unshift(blog);
+      const i = list.findIndex(b => b.id === blog.id);
+      if (i >= 0) list[i] = { ...list[i], ...blog }; else list.unshift(blog);
       this._cloudState.blogs = list;
       this._notify('blogs', list);
       await this._cloudPush(this._cloudState);
       return;
     }
-    // local
     const list = this._readLocalBlogs();
-    const idx = list.findIndex(b => b.id === blog.id);
-    if (idx >= 0) list[idx] = { ...list[idx], ...blog };
-    else list.unshift(blog);
+    const i = list.findIndex(b => b.id === blog.id);
+    if (i >= 0) list[i] = { ...list[i], ...blog }; else list.unshift(blog);
     localStorage.setItem(KEYS.blogs, JSON.stringify(list));
     _emitSync('blogs');
   },
-
   async deleteBlog(id) {
     if (this.mode === 'firebase') {
       const { doc, deleteDoc } = this._firebase;
@@ -388,15 +335,13 @@ export const DataService = {
     _emitSync('blogs');
   },
 
-  /* ============================================================
-     CATEGORIES
-     ============================================================ */
+  /* CATEGORIES */
   subscribeCategories(cb) {
     if (this.mode === 'firebase') {
       const { collection, onSnapshot } = this._firebase;
       return onSnapshot(collection(this.db, 'categories'),
-        snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-        err => console.error('[categories] snapshot error', err));
+        s => cb(s.docs.map(d => ({ id:d.id, ...d.data() }))),
+        e => console.error('[cats]', e));
     }
     if (this.mode === 'cloud') {
       this._listeners.categories.add(cb);
@@ -416,17 +361,12 @@ export const DataService = {
       clearInterval(iv);
     };
   },
-
   _readLocalCategories() {
     const raw = localStorage.getItem(KEYS.categories);
-    if (raw) {
-      const p = safeParse(raw, null);
-      if (Array.isArray(p) && p.length) return p;
-    }
+    if (raw) { const p = safeParse(raw, null); if (Array.isArray(p) && p.length) return p; }
     localStorage.setItem(KEYS.categories, JSON.stringify(DEFAULT_CATEGORIES));
     return DEFAULT_CATEGORIES;
   },
-
   async saveCategory(cat) {
     if (this.mode === 'firebase') {
       const { doc, setDoc } = this._firebase;
@@ -435,20 +375,19 @@ export const DataService = {
     }
     if (this.mode === 'cloud') {
       const list = [...(this._cloudState.categories || [])];
-      const idx = list.findIndex(c => c.id === cat.id);
-      if (idx >= 0) list[idx] = cat; else list.push(cat);
+      const i = list.findIndex(c => c.id === cat.id);
+      if (i >= 0) list[i] = cat; else list.push(cat);
       this._cloudState.categories = list;
       this._notify('categories', list);
       await this._cloudPush(this._cloudState);
       return;
     }
     const list = this._readLocalCategories();
-    const idx = list.findIndex(c => c.id === cat.id);
-    if (idx >= 0) list[idx] = cat; else list.push(cat);
+    const i = list.findIndex(c => c.id === cat.id);
+    if (i >= 0) list[i] = cat; else list.push(cat);
     localStorage.setItem(KEYS.categories, JSON.stringify(list));
     _emitSync('categories');
   },
-
   async deleteCategory(id) {
     if (this.mode === 'firebase') {
       const { doc, deleteDoc } = this._firebase;
@@ -467,19 +406,17 @@ export const DataService = {
     _emitSync('categories');
   },
 
-  /* ============================================================
-     VISITORS
-     ============================================================ */
+  /* VISITORS */
   subscribeVisitors(cb) {
     if (this.mode === 'firebase') {
       const { doc, onSnapshot } = this._firebase;
       return onSnapshot(doc(this.db, 'settings', 'visitors'),
-        snap => cb(snap.data() || { today: 0, total: 0 }),
-        err => console.error('[visitors] snapshot error', err));
+        s => cb(s.data() || { today:0, total:0 }),
+        e => console.error('[visitors]', e));
     }
     if (this.mode === 'cloud') {
       this._listeners.visitors.add(cb);
-      cb(this._cloudState.visitors || { today: 0, total: 0 });
+      cb(this._cloudState.visitors || { today:0, total:0 });
       return () => this._listeners.visitors.delete(cb);
     }
     const handler = () => cb(this._readLocalVisitors());
@@ -491,32 +428,30 @@ export const DataService = {
       window.removeEventListener('food-sync', handler);
     };
   },
-
   _readLocalVisitors() {
     const raw = localStorage.getItem(KEYS.visitors);
     const p = safeParse(raw, null);
     if (p && typeof p === 'object') return p;
-    const seed = { today: 0, total: 0 };
+    const seed = { today:0, total:0 };
     localStorage.setItem(KEYS.visitors, JSON.stringify(seed));
     return seed;
   },
-
   async bumpVisitorCount() {
     const today = todayISO();
     if (this.mode === 'firebase') {
       const { doc, getDoc, setDoc } = this._firebase;
       const ref = doc(this.db, 'settings', 'visitors');
       const snap = await getDoc(ref);
-      const cur = snap.data() || { today: 0, total: 0, lastVisitDate: null };
+      const cur = snap.data() || { today:0, total:0, lastVisitDate:null };
       if (cur.lastVisitDate === today) return cur;
-      const next = { today: (cur.today || 0) + 1, total: (cur.total || 0) + 1, lastVisitDate: today };
+      const next = { today:(cur.today||0)+1, total:(cur.total||0)+1, lastVisitDate:today };
       await setDoc(ref, next, { merge: true });
       return next;
     }
     if (this.mode === 'cloud') {
-      const cur = this._cloudState.visitors || { today: 0, total: 0, lastVisitDate: null };
+      const cur = this._cloudState.visitors || { today:0, total:0, lastVisitDate:null };
       if (cur.lastVisitDate === today) return cur;
-      const next = { today: (cur.today || 0) + 1, total: (cur.total || 0) + 1, lastVisitDate: today };
+      const next = { today:(cur.today||0)+1, total:(cur.total||0)+1, lastVisitDate:today };
       this._cloudState.visitors = next;
       this._notify('visitors', next);
       await this._cloudPush(this._cloudState);
@@ -525,16 +460,14 @@ export const DataService = {
     const cur = this._readLocalVisitors();
     const last = localStorage.getItem(KEYS.lastVisit);
     if (last === today) return cur;
-    const next = { today: (cur.today || 0) + 1, total: (cur.total || 0) + 1 };
+    const next = { today:(cur.today||0)+1, total:(cur.total||0)+1 };
     localStorage.setItem(KEYS.visitors, JSON.stringify(next));
     localStorage.setItem(KEYS.lastVisit, today);
     _emitSync('visitors');
     return next;
   },
 
-  /* ============================================================
-     AUTH
-     ============================================================ */
+  /* AUTH */
   onAuthChange(cb) {
     if (this.mode === 'firebase') {
       const { onAuthStateChanged } = this._firebase;
@@ -549,22 +482,18 @@ export const DataService = {
       window.removeEventListener('food-sync', handler);
     };
   },
-
   async login(email, password) {
     if (this.mode === 'firebase') {
       const { signInWithEmailAndPassword } = this._firebase;
       try {
         await signInWithEmailAndPassword(this.auth, email, password);
-        return { ok: true };
-      } catch (e) {
-        return { ok: false, error: e.code || e.message };
-      }
+        return { ok:true };
+      } catch (e) { return { ok:false, error:e.code || e.message }; }
     }
     const ok = email.trim() === 'admin@ruchulu.com' && password === 'admin123';
     if (ok) { localStorage.setItem(KEYS.admin, 'active'); _emitSync('auth'); }
     return { ok, error: ok ? null : 'invalid-credentials' };
   },
-
   async logout() {
     if (this.mode === 'firebase') {
       const { signOut } = this._firebase;
@@ -575,13 +504,11 @@ export const DataService = {
     _emitSync('auth');
   },
 
-  /* ============================================================
-     CLOUD HELPERS  (jsonblob)
-     ============================================================ */
+  /* CLOUD HELPERS */
   async _cloudPull() {
     try {
       const res = await fetch(`${CLOUD_BASE}/${CLOUD_SYNC_ID}`, {
-        headers: { 'Accept': 'application/json' },
+        headers: { 'Accept':'application/json' },
         cache: 'no-store',
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -589,70 +516,54 @@ export const DataService = {
       this._cloudState = {
         blogs: data.blogs || [],
         categories: data.categories || [],
-        visitors: data.visitors || { today: 0, total: 0 },
+        visitors: data.visitors || { today:0, total:0 },
       };
       this._notify('blogs', this._cloudState.blogs);
       this._notify('categories', this._cloudState.categories);
       this._notify('visitors', this._cloudState.visitors);
       return this._cloudState;
-    } catch (e) {
-      console.warn('[cloud] pull failed', e);
-      return null;
-    }
+    } catch (e) { console.warn('[cloud] pull failed', e); return null; }
   },
-
   _cloudPush(state) {
-    // serialize writes to prevent race conditions
     this._cloudWriteQueue = this._cloudWriteQueue.then(async () => {
       try {
         const res = await fetch(`${CLOUD_BASE}/${CLOUD_SYNC_ID}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
           body: JSON.stringify(state),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return true;
-      } catch (e) {
-        console.warn('[cloud] push failed', e);
-        return false;
-      }
+      } catch (e) { console.warn('[cloud] push failed', e); return false; }
     });
     return this._cloudWriteQueue;
   },
-
   _startCloudPolling() {
     if (this._cloudPollTimer) clearInterval(this._cloudPollTimer);
-    this._cloudPollTimer = setInterval(() => { this._cloudPull(); }, 3000); // every 3s
+    this._cloudPollTimer = setInterval(() => { this._cloudPull(); }, 3000);
   },
-
   _notify(kind, data) {
-    const set = this._listeners[kind];
-    if (!set) return;
-    set.forEach(fn => { try { fn(data); } catch (e) { console.error(e); } });
+    const s = this._listeners[kind];
+    if (!s) return;
+    s.forEach(fn => { try { fn(data); } catch (e) { console.error(e); } });
   },
-
-  /* ============================================================
-     UTILITY: create a NEW cloud sync blob (used by admin panel)
-     ============================================================ */
   async createCloudBlob() {
     try {
       const seed = {
         blogs: this._cloudState.blogs?.length ? this._cloudState.blogs : DEFAULT_BLOGS(),
         categories: this._cloudState.categories?.length ? this._cloudState.categories : DEFAULT_CATEGORIES,
-        visitors: this._cloudState.visitors || { today: 0, total: 0, lastVisitDate: null },
+        visitors: this._cloudState.visitors || { today:0, total:0, lastVisitDate:null },
       };
       const res = await fetch(CLOUD_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
         body: JSON.stringify(seed),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const location = res.headers.get('Location') || res.headers.get('location');
-      const id = location ? location.split('/').pop() : null;
-      if (!id) throw new Error('No location header');
-      return { ok: true, id };
-    } catch (e) {
-      return { ok: false, error: String(e) };
-    }
+      const loc = res.headers.get('Location') || res.headers.get('location');
+      const id = loc ? loc.split('/').pop() : null;
+      if (!id) throw new Error('No Location header');
+      return { ok:true, id };
+    } catch (e) { return { ok:false, error: String(e) }; }
   },
 };
